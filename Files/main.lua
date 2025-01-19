@@ -23,33 +23,61 @@ local pauseMenu = false
 local backspaceHeld = false
 local backspaceHoldTime = 0
 local backspaceRepeatDelay = 0.1
+local previousChar = nil -- To track the previously selected character
+local previousGroup = nil -- To track the previously selected group
 
--- Full Hiragana and Katakana tables
+-- Full Hiragana and Katakana tables with groups
 local hiragana = {
-    { char = "あ", romaji = "a" }, { char = "い", romaji = "i" }, { char = "う", romaji = "u" }, { char = "え", romaji = "e" }, { char = "お", romaji = "o" },
-    { char = "か", romaji = "ka" }, { char = "き", romaji = "ki" }, { char = "く", romaji = "ku" }, { char = "け", romaji = "ke" }, { char = "こ", romaji = "ko" },
-    { char = "さ", romaji = "sa" }, { char = "し", romaji = "shi" }, { char = "す", romaji = "su" }, { char = "せ", romaji = "se" }, { char = "そ", romaji = "so" },
-    { char = "た", romaji = "ta" }, { char = "ち", romaji = "chi" }, { char = "つ", romaji = "tsu" }, { char = "て", romaji = "te" }, { char = "と", romaji = "to" },
-    { char = "な", romaji = "na" }, { char = "に", romaji = "ni" }, { char = "ぬ", romaji = "nu" }, { char = "ね", romaji = "ne" }, { char = "の", romaji = "no" },
-    { char = "は", romaji = "ha" }, { char = "ひ", romaji = "hi" }, { char = "ふ", romaji = "fu" }, { char = "へ", romaji = "he" }, { char = "ほ", romaji = "ho" },
-    { char = "ま", romaji = "ma" }, { char = "み", romaji = "mi" }, { char = "む", romaji = "mu" }, { char = "め", romaji = "me" }, { char = "も", romaji = "mo" },
-    { char = "や", romaji = "ya" }, { char = "ゆ", romaji = "yu" }, { char = "よ", romaji = "yo" }, { char = "ら", romaji = "ra" }, { char = "り", romaji = "ri" },
-    { char = "る", romaji = "ru" }, { char = "れ", romaji = "re" }, { char = "ろ", romaji = "ro" }, { char = "わ", romaji = "wa" }, { char = "を", romaji = "wo" },
-    { char = "ん", romaji = "n" }
+    { char = "あ", romaji = "a", group = "a" }, { char = "い", romaji = "i", group = "a" }, { char = "う", romaji = "u", group = "a" }, { char = "え", romaji = "e", group = "a" }, { char = "お", romaji = "o", group = "a" },
+    { char = "か", romaji = "ka", group = "ka" }, { char = "き", romaji = "ki", group = "ka" }, { char = "く", romaji = "ku", group = "ka" }, { char = "け", romaji = "ke", group = "ka" }, { char = "こ", romaji = "ko", group = "ka" },
+    { char = "さ", romaji = "sa", group = "sa" }, { char = "し", romaji = "shi", group = "sa" }, { char = "す", romaji = "su", group = "sa" }, { char = "せ", romaji = "se", group = "sa" }, { char = "そ", romaji = "so", group = "sa" },
+    { char = "た", romaji = "ta", group = "ta" }, { char = "ち", romaji = "chi", group = "ta" }, { char = "つ", romaji = "tsu", group = "ta" }, { char = "て", romaji = "te", group = "ta" }, { char = "と", romaji = "to", group = "ta" },
+    { char = "な", romaji = "na", group = "na" }, { char = "に", romaji = "ni", group = "na" }, { char = "ぬ", romaji = "nu", group = "na" }, { char = "ね", romaji = "ne", group = "na" }, { char = "の", romaji = "no", group = "na" },
+    { char = "は", romaji = "ha", group = "ha" }, { char = "ひ", romaji = "hi", group = "ha" }, { char = "ふ", romaji = "fu", group = "ha" }, { char = "へ", romaji = "he", group = "ha" }, { char = "ほ", romaji = "ho", group = "ha" },
+    { char = "ま", romaji = "ma", group = "ma" }, { char = "み", romaji = "mi", group = "ma" }, { char = "む", romaji = "mu", group = "ma" }, { char = "め", romaji = "me", group = "ma" }, { char = "も", romaji = "mo", group = "ma" },
+    { char = "や", romaji = "ya", group = "ya" }, { char = "ゆ", romaji = "yu", group = "ya" }, { char = "よ", romaji = "yo", group = "ya" }, { char = "ら", romaji = "ra", group = "ra" }, { char = "り", romaji = "ri", group = "ra" },
+    { char = "る", romaji = "ru", group = "ra" }, { char = "れ", romaji = "re", group = "ra" }, { char = "ろ", romaji = "ro", group = "ra" }, { char = "わ", romaji = "wa", group = "wa" }, { char = "を", romaji = "wo", group = "wa" },
+    { char = "ん", romaji = "n", group = "n" }
 }
 
 local katakana = {
-    { char = "ア", romaji = "a" }, { char = "イ", romaji = "i" }, { char = "ウ", romaji = "u" }, { char = "エ", romaji = "e" }, { char = "オ", romaji = "o" },
-    { char = "カ", romaji = "ka" }, { char = "キ", romaji = "ki" }, { char = "ク", romaji = "ku" }, { char = "ケ", romaji = "ke" }, { char = "コ", romaji = "ko" },
-    { char = "サ", romaji = "sa" }, { char = "シ", romaji = "shi" }, { char = "ス", romaji = "su" }, { char = "セ", romaji = "se" }, { char = "ソ", romaji = "so" },
-    { char = "タ", romaji = "ta" }, { char = "チ", romaji = "chi" }, { char = "ツ", romaji = "tsu" }, { char = "テ", romaji = "te" }, { char = "ト", romaji = "to" },
-    { char = "ナ", romaji = "na" }, { char = "ニ", romaji = "ni" }, { char = "ヌ", romaji = "nu" }, { char = "ネ", romaji = "ne" }, { char = "ノ", romaji = "no" },
-    { char = "ハ", romaji = "ha" }, { char = "ヒ", romaji = "hi" }, { char = "フ", romaji = "fu" }, { char = "ヘ", romaji = "he" }, { char = "ホ", romaji = "ho" },
-    { char = "マ", romaji = "ma" }, { char = "ミ", romaji = "mi" }, { char = "ム", romaji = "mu" }, { char = "メ", romaji = "me" }, { char = "モ", romaji = "mo" },
-    { char = "ヤ", romaji = "ya" }, { char = "ユ", romaji = "yu" }, { char = "ヨ", romaji = "yo" }, { char = "ラ", romaji = "ra" }, { char = "リ", romaji = "ri" },
-    { char = "ル", romaji = "ru" }, { char = "レ", romaji = "re" }, { char = "ロ", romaji = "ro" }, { char = "ワ", romaji = "wa" }, { char = "ヲ", romaji = "wo" },
-    { char = "ン", romaji = "n" }
+    { char = "ア", romaji = "a", group = "a" }, { char = "イ", romaji = "i", group = "a" }, { char = "ウ", romaji = "u", group = "a" }, { char = "エ", romaji = "e", group = "a" }, { char = "オ", romaji = "o", group = "a" },
+    { char = "カ", romaji = "ka", group = "ka" }, { char = "キ", romaji = "ki", group = "ka" }, { char = "ク", romaji = "ku", group = "ka" }, { char = "ケ", romaji = "ke", group = "ka" }, { char = "コ", romaji = "ko", group = "ka" },
+    { char = "サ", romaji = "sa", group = "sa" }, { char = "シ", romaji = "shi", group = "sa" }, { char = "ス", romaji = "su", group = "sa" }, { char = "セ", romaji = "se", group = "sa" }, { char = "ソ", romaji = "so", group = "sa" },
+    { char = "タ", romaji = "ta", group = "ta" }, { char = "チ", romaji = "chi", group = "ta" }, { char = "ツ", romaji = "tsu", group = "ta" }, { char = "テ", romaji = "te", group = "ta" }, { char = "ト", romaji = "to", group = "ta" },
+    { char = "ナ", romaji = "na", group = "na" }, { char = "ニ", romaji = "ni", group = "na" }, { char = "ヌ", romaji = "nu", group = "na" }, { char = "ネ", romaji = "ne", group = "na" }, { char = "ノ", romaji = "no", group = "na" },
+    { char = "ハ", romaji = "ha", group = "ha" }, { char = "ヒ", romaji = "hi", group = "ha" }, { char = "フ", romaji = "fu", group = "ha" }, { char = "ヘ", romaji = "he", group = "ha" }, { char = "ホ", romaji = "ho", group = "ha" },
+    { char = "マ", romaji = "ma", group = "ma" }, { char = "ミ", romaji = "mi", group = "ma" }, { char = "ム", romaji = "mu", group = "ma" }, { char = "メ", romaji = "me", group = "ma" }, { char = "モ", romaji = "mo", group = "ma" },
+    { char = "ヤ", romaji = "ya", group = "ya" }, { char = "ユ", romaji = "yu", group = "ya" }, { char = "ヨ", romaji = "yo", group = "ya" }, { char = "ラ", romaji = "ra", group = "ra" }, { char = "リ", romaji = "ri", group = "ra" },
+    { char = "ル", romaji = "ru", group = "ra" }, { char = "レ", romaji = "re", group = "ra" }, { char = "ロ", romaji = "ro", group = "ra" }, { char = "ワ", romaji = "wa", group = "wa" }, { char = "ヲ", romaji = "wo", group = "wa" },
+    { char = "ン", romaji = "n", group = "n" }
 }
+
+-- Helper functions
+local function selectRandomCharacter(alphabet)
+    local attempts = 0
+    local char
+    repeat
+        char = alphabet[love.math.random(#alphabet)]
+        attempts = attempts + 1
+    until (char.char ~= previousChar and char.group ~= previousGroup) or attempts > 10
+    previousChar = char.char
+    previousGroup = char.group
+    return char
+end
+
+local function startQuiz(alphabet)
+    alphabetType = alphabet
+    characters = (alphabet == "hiragana") and hiragana or katakana
+    currentQuiz = {}
+    for i = 1, 25 do
+        table.insert(currentQuiz, selectRandomCharacter(characters))
+    end
+    questionIndex = 1
+    timer = timeLimit
+    score = 0
+    screen = "quiz"
+end
 
 -- Helper functions
 local function saveScore()
@@ -64,19 +92,6 @@ local function loadScore()
         local data = json.decode(file)
         totalScore = data.totalScore or 0
     end
-end
-
-local function startQuiz(alphabet)
-    alphabetType = alphabet
-    characters = (alphabet == "hiragana") and hiragana or katakana
-    currentQuiz = {}
-    for i = 1, 25 do
-        table.insert(currentQuiz, characters[love.math.random(#characters)])
-    end
-    questionIndex = 1
-    timer = timeLimit
-    score = 0
-    screen = "quiz"
 end
 
 -- LOVE functions
@@ -110,7 +125,7 @@ function love.draw()
     -- Display escape info on all screens except menu
     if screen ~= "menu" then
         love.graphics.setFont(smallFont)
-        love.graphics.printf("Press Escape to return to the menu", 10, 10, love.graphics.getWidth(), "left")
+        love.graphics.printf("Press Esc to return to the menu", 10, 10, love.graphics.getWidth(), "left")
         love.graphics.setFont(font)
     end
 
